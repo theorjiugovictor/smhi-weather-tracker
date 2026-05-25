@@ -1,35 +1,33 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Sliders, HelpCircle, Loader2 } from 'lucide-react';
+import { Search, MapPin, Sliders, Loader2 } from 'lucide-react';
 
-export default function LocationSelector({ onLocationSelect, currentDifficulty, onDifficultyChange }) {
+const PRESETS = [
+  { name: 'Stockholm', lat: 59.3293, lon: 18.0686 },
+  { name: 'Göteborg', lat: 57.7089, lon: 11.9746 },
+  { name: 'Malmö', lat: 55.6050, lon: 13.0038 },
+  { name: 'Kiruna', lat: 67.8558, lon: 20.2253 },
+  { name: 'Visby', lat: 57.6348, lon: 18.2948 }
+];
+
+const DIFFICULTIES = [
+  { id: 'easy', label: 'Easy', desc: 'Cached cities, 50 km radius' },
+  { id: 'medium', label: 'Medium', desc: 'Nearest station, 25 km' },
+  { id: 'hard', label: 'Hard', desc: 'IDW interpolation, 15 km' }
+];
+
+export default function LocationSelector({ apiBase, onLocationSelect, currentDifficulty, onDifficultyChange }) {
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showTooltip, setShowTooltip] = useState(false);
-
-  const presets = [
-    { name: 'Stockholm', lat: 59.3293, lon: 18.0686 },
-    { name: 'Göteborg', lat: 57.7089, lon: 11.9746 },
-    { name: 'Malmö', lat: 55.6050, lon: 13.0038 },
-    { name: 'Kiruna', lat: 67.8558, lon: 20.2253 },
-    { name: 'Visby', lat: 57.6348, lon: 18.2948 }
-  ];
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!address.trim()) return;
-
     setLoading(true);
     setError('');
-
     try {
-      // Fetch from our FastAPI backend
-      const response = await fetch(`http://localhost:8000/api/geocode?address=${encodeURIComponent(address)}`);
-      
-      if (!response.ok) {
-        throw new Error('Address not found. Please try a different location or check spelling.');
-      }
-
+      const response = await fetch(`${apiBase}/api/geocode?address=${encodeURIComponent(address)}`);
+      if (!response.ok) throw new Error('Address not found.');
       const data = await response.json();
       onLocationSelect(data.lat, data.lon, data.display_name);
     } catch (err) {
@@ -39,145 +37,75 @@ export default function LocationSelector({ onLocationSelect, currentDifficulty, 
     }
   };
 
-  const handlePresetSelect = (preset) => {
-    setAddress(preset.name);
-    onLocationSelect(preset.lat, preset.lon, preset.name);
-  };
-
   return (
-    <div className="glass-panel p-7 flex flex-col gap-7" style={{ height: 'fit-content' }}>
+    <div className="glass-panel p-6 flex flex-col gap-6 h-fit">
+      {/* Header */}
       <div>
-        <h2 className="text-xl mb-1 flex items-center gap-2">
-          <MapPin className="text-primary w-5 h-5" /> Location Selection
+        <h2 className="text-base font-semibold flex items-center gap-2 mb-1">
+          <MapPin className="text-primary w-4 h-4" /> Location
         </h2>
-        <p className="text-sm text-text-secondary">Enter an address or search within Sweden</p>
+        <p className="text-xs text-text-muted">Search or select a Swedish city</p>
       </div>
 
-      {/* Geocoding Search Form */}
-      <form onSubmit={handleSearch} className="flex flex-col gap-2">
-        <div style={{ position: 'relative' }}>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Search address (e.g. Stockholm, Kiruna...)"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            disabled={loading}
-            style={{ paddingRight: '2.5rem' }}
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              position: 'absolute',
-              right: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)'
-            }}
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
-          </button>
-        </div>
-        {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+      {/* Search */}
+      <form onSubmit={handleSearch} className="relative">
+        <input
+          type="text"
+          className="form-input pr-10"
+          placeholder="Search address…"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          disabled={loading}
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+        </button>
+        {error && <p className="text-[11px] text-red-400 mt-1.5">{error}</p>}
       </form>
 
-      {/* Level of Difficulty Selection */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-semibold flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-secondary" /> Calculation Difficulty
-          </label>
-          <div style={{ position: 'relative' }}>
-            <HelpCircle
-              className="w-4 h-4 text-text-muted cursor-pointer hover:text-text-primary"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-              onClick={() => setShowTooltip(!showTooltip)}
-            />
-            {showTooltip && (
-              <div
-                className="glass-panel p-4 text-xs text-text-secondary"
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: '1.5rem',
-                  zIndex: 50,
-                  width: '280px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.95)'
-                }}
-              >
-                <p className="font-bold text-text-primary mb-2 text-sm">Level of Difficulty Effects:</p>
-                <ul className="flex flex-col gap-2">
-                  <li>
-                    <strong className="text-primary">Easy Mode:</strong> Uses pre-mapped weather stations for major Swedish cities with instant caching. Lightning strikes counted in a 50 km radius.
-                  </li>
-                  <li>
-                    <strong className="text-secondary">Medium Mode:</strong> Finds the single nearest active SMHI weather station and fetches its CSV logs dynamically. Lightning strikes calculated within a 25 km radius.
-                  </li>
-                  <li>
-                    <strong className="text-accent">Hard Mode:</strong> Fetches historical logs from the 3 nearest stations, computes **Inverse Distance Weighting (IDW) spatial interpolation** for cloud cover, and calculates lightning strikes within a 15 km radius.
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Segmented control tabs */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '0.25rem',
-            backgroundColor: 'rgba(0,0,0,0.2)',
-            padding: '0.25rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border)'
-          }}
-        >
-          {['easy', 'medium', 'hard'].map((level) => (
+      {/* Difficulty */}
+      <div className="flex flex-col gap-2.5">
+        <label className="text-xs font-medium flex items-center gap-2 text-text-secondary">
+          <Sliders className="w-3.5 h-3.5 text-secondary" /> Calculation Mode
+        </label>
+        <div className="grid grid-cols-3 gap-1 p-1 bg-slate-900/50 rounded-lg border border-white/[0.04]">
+          {DIFFICULTIES.map(({ id, label }) => (
             <button
-              key={level}
+              key={id}
               type="button"
-              className="btn"
-              onClick={() => onDifficultyChange(level)}
-              style={{
-                padding: '0.4rem 0',
-                fontSize: '0.85rem',
-                borderRadius: 'var(--radius-sm)',
-                textTransform: 'capitalize',
-                background: currentDifficulty === level ? 'linear-gradient(135deg, var(--primary), var(--secondary))' : 'transparent',
-                color: currentDifficulty === level ? '#fff' : 'var(--text-secondary)',
-                boxShadow: currentDifficulty === level ? '0 2px 8px rgba(99, 102, 241, 0.2)' : 'none',
-                border: 'none'
-              }}
+              onClick={() => onDifficultyChange(id)}
+              className={`py-1.5 text-xs font-medium rounded-md transition-all ${
+                currentDifficulty === id
+                  ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-sm'
+                  : 'text-text-muted hover:text-text-secondary'
+              }`}
             >
-              {level}
+              {label}
             </button>
           ))}
         </div>
+        <p className="text-[10px] text-text-muted">
+          {DIFFICULTIES.find(d => d.id === currentDifficulty)?.desc}
+        </p>
       </div>
 
-      {/* Preset Quick select buttons */}
+      {/* Presets */}
       <div>
-        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-3">
-          Swedish City Presets
+        <label className="text-[10px] font-medium text-text-muted uppercase tracking-wider block mb-2">
+          Quick Select
         </label>
-        <div className="flex flex-wrap gap-2">
-          {presets.map((preset) => (
+        <div className="flex flex-wrap gap-1.5">
+          {PRESETS.map((preset) => (
             <button
               key={preset.name}
-              className="btn btn-secondary"
-              onClick={() => handlePresetSelect(preset)}
-              style={{
-                padding: '0.4rem 0.8rem',
-                fontSize: '0.85rem',
-                borderRadius: 'var(--radius-md)'
+              className="btn btn-secondary text-xs py-1.5 px-3"
+              onClick={() => {
+                setAddress(preset.name);
+                onLocationSelect(preset.lat, preset.lon, preset.name);
               }}
             >
               {preset.name}

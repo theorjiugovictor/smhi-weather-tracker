@@ -1,47 +1,48 @@
 import React from 'react';
 import WeatherDashboard from './components/WeatherDashboard';
-import { CloudLightning, Info } from 'lucide-react';
+import { CloudLightning, Database } from 'lucide-react';
 
-// Shared horizontal padding for the page rails — uses clamp() so the gutter
-// scales smoothly with viewport width and never crowds the screen edges.
-const RAIL = 'px-[clamp(1.5rem,5vw,5rem)]';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header navbar */}
-      <header className="border-b border-white/5 bg-slate-950/40 backdrop-blur-xl sticky top-0 z-40">
-        <div className={`max-w-7xl mx-auto ${RAIL} h-20 flex items-center justify-between`}>
+      {/* Header */}
+      <header className="border-b border-white/[0.04] bg-slate-950/60 backdrop-blur-xl sticky top-0 z-40">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-gradient-to-tr from-primary to-secondary rounded-xl text-white shadow-lg shadow-primary/30">
-              <CloudLightning className="w-5 h-5" />
-            </span>
+            <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
+              <CloudLightning className="w-4 h-4 text-white" />
+            </div>
             <div className="leading-tight">
-              <span className="text-sm font-extrabold font-display tracking-[0.08em] bg-gradient-to-r from-white via-text-primary to-text-secondary bg-clip-text text-transparent">
-                SMHI WEATHER TRACKER
+              <span className="text-sm font-bold font-display tracking-tight text-text-primary">
+                SMHI Weather Tracker
               </span>
-              <span className="text-[10px] text-accent font-bold block tracking-[0.2em]">CLIMATOLOGY ENGINE</span>
+              <span className="text-[10px] text-text-muted font-medium block">
+                Climatology Engine
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-xs text-text-secondary">
-            <span className="hidden sm:inline-flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-primary" /> Data Source: SMHI Open Data API
+          <div className="flex items-center gap-3 text-xs text-text-muted">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/[0.06]">
+              <Database className="w-3 h-3 text-accent-green" />
+              <span>SMHI Open Data</span>
             </span>
           </div>
         </div>
       </header>
 
-      {/* Main body */}
-      <main className={`flex-1 max-w-7xl w-full mx-auto ${RAIL} py-10`}>
-        <WeatherDashboard />
+      {/* Main */}
+      <main className="flex-1 max-w-[1400px] w-full mx-auto px-6 sm:px-8 py-8">
+        <WeatherDashboard apiBase={API_BASE} />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 bg-slate-950/40 py-8 text-center text-xs text-text-muted mt-6">
-        <div className={`max-w-7xl mx-auto ${RAIL} flex flex-col sm:flex-row items-center justify-between gap-4`}>
-          <p>© {new Date().getFullYear()} SMHI Weather & Lightning Tracker. Created for pairs-programming demo.</p>
-          <p>
-            Powered by <a href="https://opendata.smhi.se/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SMHI Open Data Portal</a> & Google Gemini
+      <footer className="border-t border-white/[0.04] py-6 text-center text-xs text-text-muted">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p>SMHI Weather & Lightning Tracker — Pairs Programming Demo</p>
+          <p className="text-text-muted/60">
+            Data: <a href="https://opendata.smhi.se/" target="_blank" rel="noopener noreferrer" className="text-primary/80 hover:text-primary transition-colors">SMHI Open Data Portal</a>
           </p>
         </div>
       </footer>

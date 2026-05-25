@@ -1,13 +1,18 @@
 import os
 import json
 import random
-import google.generativeai as genai
 from typing import Dict, List, Any
 
-# Configure Gemini if key is in env
+try:
+    from google import genai
+    HAS_GENAI = True
+except ImportError:
+    HAS_GENAI = False
+
 api_key = os.getenv("GEMINI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
+client = None
+if api_key and HAS_GENAI:
+    client = genai.Client(api_key=api_key)
 
 def generate_weather_forecast(lat: float, lon: float, 
                               historical_cloud: List[Dict[str, Any]], 
@@ -40,13 +45,14 @@ def generate_weather_forecast(lat: float, lon: float,
     }}
     """
     
-    if api_key:
+    if client:
         try:
             print("Requesting weather forecast from Gemini API...")
-            model = genai.GenerativeModel("gemini-2.5-flash")
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
             
-            # Clean response text in case it wraps it in markdown code block
             resp_text = response.text.strip()
             if resp_text.startswith("```json"):
                 resp_text = resp_text[7:]
@@ -55,7 +61,6 @@ def generate_weather_forecast(lat: float, lon: float,
             resp_text = resp_text.strip()
             
             result = json.loads(resp_text)
-            # Ensure keys exist
             if "forecast" in result and "narrative" in result:
                 result["source"] = "Gemini AI"
                 return result

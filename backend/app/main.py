@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from typing import Optional
 from app.database import init_db
 from app.services.geocoding_service import geocode_address
@@ -12,29 +13,28 @@ from app.services.smhi_service import (
 )
 from app.services.forecast_service import generate_weather_forecast
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    await ensure_stations_loaded()
+    start_lightning_seeding(2024)
+    yield
+
 app = FastAPI(
     title="SMHI Weather & Lightning Tracker API",
     description="Backend API that aggregates SMHI cloud observations and lightning strike logs.",
-    version="1.0"
+    version="1.0",
+    lifespan=lifespan
 )
 
 # Enable CORS for frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify frontend domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-async def startup_event():
-    # 1. Initialize SQLite Database
-    init_db()
-    # 2. Pre-load stations
-    await ensure_stations_loaded()
-    # 3. Start background seeding of 2024 lightning data
-    start_lightning_seeding(2024)
 
 @app.get("/")
 def read_root():

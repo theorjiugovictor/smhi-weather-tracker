@@ -3,5 +3,5 @@ uvicorn
 httpx
 pandas
 numpy
-google-generativeai
+google-genai
 pydantic
