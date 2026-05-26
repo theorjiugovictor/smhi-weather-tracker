@@ -56,7 +56,7 @@ export default function WeatherCharts({ data }) {
   }));
 
   return (
-    <div className="glass-panel p-8 sm:p-10 flex flex-col gap-6">
+    <div className="glass-panel flex flex-col gap-6">
       {/* Header + Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-base font-semibold flex items-center gap-2.5">

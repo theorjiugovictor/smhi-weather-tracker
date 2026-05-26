@@ -45,7 +45,7 @@ export default function LocationSelector({ onLocationSelect, currentDifficulty, 
   };
 
   return (
-    <div className="glass-panel p-7 flex flex-col gap-7" style={{ height: 'fit-content' }}>
+    <div className="glass-panel flex flex-col gap-7" style={{ height: 'fit-content' }}>
       <div>
         <h2 className="text-xl mb-1 flex items-center gap-2">
           <MapPin className="text-primary w-5 h-5" /> Location Selection
@@ -100,15 +100,19 @@ export default function LocationSelector({ onLocationSelect, currentDifficulty, 
             />
             {showTooltip && (
               <div
-                className="glass-panel p-4 text-xs text-text-secondary"
+                className="text-xs text-text-secondary"
                 style={{
                   position: 'absolute',
                   right: 0,
                   top: '1.5rem',
                   zIndex: 50,
                   width: '280px',
+                  padding: '1.25rem',
                   boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.95)'
+                  backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 'var(--radius-md)',
+                  backdropFilter: 'blur(12px)'
                 }}
               >
                 <p className="font-bold text-text-primary mb-2 text-sm">Level of Difficulty Effects:</p>

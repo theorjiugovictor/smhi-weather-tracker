@@ -60,8 +60,6 @@
 }
 
 html {
-  /* Reserve scrollbar space symmetrically so content stays visually centered */
-  scrollbar-gutter: stable both-edges;
   overflow-x: hidden;
 }
 
@@ -130,6 +128,7 @@ body::before {
     0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
     0 20px 50px -20px rgba(0, 0, 0, 0.6);
   border-radius: var(--radius-lg);
+  padding: 2.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -164,8 +163,8 @@ body::before {
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   backdrop-filter: blur(10px) saturate(140%);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 2rem 2.25rem;
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2.75rem;
   transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
