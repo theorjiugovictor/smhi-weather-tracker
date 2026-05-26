@@ -103,7 +103,7 @@ export default function AIForecast({ apiBase, lat, lon, difficulty }) {
   })) || [];
 
   return (
-    <div className="glass-panel p-6 flex flex-col gap-5">
+    <div className="glass-panel p-8 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold flex items-center gap-2">
           <Sparkles className="text-secondary w-4 h-4" /> AI Forecast

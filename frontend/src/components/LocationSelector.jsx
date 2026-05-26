@@ -38,7 +38,7 @@ export default function LocationSelector({ apiBase, onLocationSelect, currentDif
   };
 
   return (
-    <div className="glass-panel p-6 flex flex-col gap-6 h-fit">
+    <div className="glass-panel p-8 flex flex-col gap-6 h-fit">
       {/* Header */}
       <div>
         <h2 className="text-base font-semibold flex items-center gap-2 mb-1">

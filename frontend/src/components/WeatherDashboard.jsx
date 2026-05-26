@@ -83,8 +83,7 @@ export default function WeatherDashboard({ apiBase }) {
     <div className="flex flex-col gap-8">
       {/* Seeding Progress */}
       {seedingStatus && seedingStatus.status === 'SEEDING' && (
-        <div className="glass-panel p-5 flex items-center gap-4">
-          <Server className="w-4 h-4 text-primary status-pulse flex-shrink-0" />
+        <div className="glass-panel p-5 flex items-center gap-4">          <Server className="w-4 h-4 text-primary status-pulse flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-text-primary truncate">Caching lightning strike archives…</p>
             <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
