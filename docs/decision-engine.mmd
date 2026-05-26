@@ -4,31 +4,31 @@ title: SMHI Weather & Lightning Tracker — Decision Engine
 flowchart TD
     Start([Request: address + difficulty]) --> Geo{Address in cache?}
     Geo -->|Yes| Diff{Difficulty tier?}
-    Geo -->|No| Nom[Nominatim<br/>Nordic-first → global fallback]
+    Geo -->|No| Nom["Nominatim<br/>Nordic-first → global fallback"]
     Nom --> Diff
 
-    Diff -->|🟢 Easy| E1[Map to nearest of 5<br/>preset cities by Haversine]
-    Diff -->|🟡 Medium| M1[Query stations WHERE active=1<br/>Haversine → top 1]
-    Diff -->|🔴 Hard| H1[Top 3 stations<br/>IDW weights = 1/d²]
+    Diff -->|🟢 Easy| E1["Map to nearest of 5<br/>preset cities by Haversine"]
+    Diff -->|🟡 Medium| M1["Query stations WHERE active=1<br/>Haversine → top 1"]
+    Diff -->|🔴 Hard| H1["Top 3 stations<br/>IDW weights = 1/d²"]
 
-    E1 --> Fetch{Station CSV<br/>in memory?}
+    E1 --> Fetch{"Station CSV<br/>in memory?"}
     M1 --> Fetch
     H1 --> Fetch
-    Fetch -->|miss| SMHI[GET MetObs CSV<br/>parse + cap 113→100%]
-    Fetch -->|hit| Aggr[Aggregate<br/>daily / monthly / yearly]
+    Fetch -->|miss| SMHI["GET MetObs CSV<br/>parse + cap 113→100%"]
+    Fetch -->|hit| Aggr["Aggregate<br/>daily / monthly / yearly"]
     SMHI --> Aggr
 
     Aggr --> LGT{Lightning DB seeded?}
-    LGT -->|✅ COMPLETED| BBox[SQL bbox filter<br/>uses idx_lightning_coords]
-    LGT -->|⏳ SEEDING/PENDING| Sim[Synthetic model<br/>seasonal × lat × area]
-    BBox --> Hav[Haversine refine<br/>O of n bbox-rows]
-    Hav --> Prob[Compute monthly<br/>probability % + counts]
+    LGT -->|✅ COMPLETED| BBox["SQL bbox filter<br/>uses idx_lightning_coords"]
+    LGT -->|⏳ SEEDING/PENDING| Sim["Synthetic model<br/>seasonal × lat × area"]
+    BBox --> Hav["Haversine refine<br/>O of n bbox-rows"]
+    Hav --> Prob["Compute monthly<br/>probability % + counts"]
     Sim --> Prob
 
     Prob --> AI{Forecast requested?}
     AI -->|No| Done([📦 JSON response])
-    AI -->|GEMINI_API_KEY set| Gem[Gemini 2.5-flash<br/>strict JSON prompt]
-    AI -->|key missing| Stat[Statistical mean + jitter<br/>+ latitude narrative]
+    AI -->|GEMINI_API_KEY set| Gem["Gemini 2.5-flash<br/>strict JSON prompt"]
+    AI -->|key missing| Stat["Statistical mean + jitter<br/>+ latitude narrative"]
     Gem -->|exception| Stat
     Gem --> Done
     Stat --> Done
