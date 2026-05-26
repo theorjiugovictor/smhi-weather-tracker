@@ -16,7 +16,7 @@ env:
   GCP_REGION: europe-north1
   SERVICE_NAME: smhi-weather-tracker-api
   ARTIFACT_REPO: smhi-weather-tracker-api
-  FRONTEND_BUCKET: ${{ secrets.GCS_BUCKET_NAME }}
+  FRONTEND_BUCKET: smhi-weather-tracker-frontend-macs-489321
 
 jobs:
   # ─────────────────────────────────────────────────
