@@ -12,7 +12,34 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+// Minimal Markdown renderer for the AI narrative (headings, bold, bullet lists)
+function renderInline(text) {
+  // Handle **bold** and *italic*
+  const parts = [];
+  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
+  let last = 0;
+  let m;
+  let key = 0;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    const token = m[0];
+    if (token.startsWith('**')) {
+      parts.push(<strong key={key++} className="text-text-primary font-semibold">{token.slice(2, -2)}</strong>);
+    } else if (token.startsWith('`')) {
+      parts.push(<code key={key++} className="px-1.5 py-0.5 rounded bg-slate-800/70 text-accent text-[0.85em]">{token.slice(1, -1)}</code>);
+    } else {
+      parts.push(<em key={key++} className="text-text-primary/90">{token.slice(1, -1)}</em>);
+    }
+    last = m.index + token.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
 
 function MarkdownNarrative({ text }) {
   if (!text) return null;
@@ -21,33 +48,13 @@ function MarkdownNarrative({ text }) {
   let listBuffer = [];
   let key = 0;
 
-  const renderInline = (str) => {
-    const parts = [];
-    const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
-    let last = 0;
-    let m;
-    let k = 0;
-    while ((m = regex.exec(str)) !== null) {
-      if (m.index > last) parts.push(str.slice(last, m.index));
-      const token = m[0];
-      if (token.startsWith('**')) {
-        parts.push(<strong key={k++} className="text-text-primary font-semibold">{token.slice(2, -2)}</strong>);
-      } else if (token.startsWith('`')) {
-        parts.push(<code key={k++} className="px-1 py-0.5 rounded bg-slate-800/60 text-accent text-[0.85em]">{token.slice(1, -1)}</code>);
-      } else {
-        parts.push(<em key={k++} className="text-text-primary/90">{token.slice(1, -1)}</em>);
-      }
-      last = m.index + token.length;
-    }
-    if (last < str.length) parts.push(str.slice(last));
-    return parts;
-  };
-
   const flushList = () => {
     if (listBuffer.length) {
       blocks.push(
-        <ul key={`ul-${key++}`} className="flex flex-col gap-1.5 pl-4 list-disc marker:text-primary/60">
-          {listBuffer.map((item, i) => <li key={i} className="text-text-secondary text-sm leading-relaxed">{renderInline(item)}</li>)}
+        <ul key={`ul-${key++}`} className="flex flex-col gap-2 pl-5 list-disc marker:text-primary">
+          {listBuffer.map((item, i) => (
+            <li key={i} className="text-text-secondary leading-relaxed">{renderInline(item)}</li>
+          ))}
         </ul>
       );
       listBuffer = [];
@@ -57,22 +64,36 @@ function MarkdownNarrative({ text }) {
   for (const raw of lines) {
     const line = raw.trim();
     if (!line) { flushList(); continue; }
+
     if (/^#{1,6}\s/.test(line)) {
       flushList();
+      const level = line.match(/^#+/)[0].length;
       const content = line.replace(/^#+\s+/, '');
-      blocks.push(<h4 key={`h-${key++}`} className="font-display font-semibold text-text-primary text-sm mt-1">{renderInline(content)}</h4>);
+      const sizes = ['text-xl', 'text-lg', 'text-base', 'text-base', 'text-sm', 'text-sm'];
+      blocks.push(
+        <h4
+          key={`h-${key++}`}
+          className={`font-display font-bold text-text-primary tracking-tight ${sizes[level - 1] || 'text-base'} mt-1`}
+        >
+          {renderInline(content)}
+        </h4>
+      );
     } else if (/^[-*]\s+/.test(line)) {
       listBuffer.push(line.replace(/^[-*]\s+/, ''));
     } else {
       flushList();
-      blocks.push(<p key={`p-${key++}`} className="text-text-secondary text-sm leading-relaxed">{renderInline(line)}</p>);
+      blocks.push(
+        <p key={`p-${key++}`} className="text-text-secondary leading-relaxed">
+          {renderInline(line)}
+        </p>
+      );
     }
   }
   flushList();
-  return <div className="flex flex-col gap-2.5">{blocks}</div>;
+  return <div className="flex flex-col gap-3">{blocks}</div>;
 }
 
-export default function AIForecast({ apiBase, lat, lon, difficulty }) {
+export default function AIForecast({ lat, lon, difficulty }) {
   const [loading, setLoading] = useState(false);
   const [forecast, setForecast] = useState(null);
   const [error, setError] = useState('');
@@ -82,9 +103,14 @@ export default function AIForecast({ apiBase, lat, lon, difficulty }) {
     setError('');
     setForecast(null);
     try {
-      const response = await fetch(`${apiBase}/api/forecast?lat=${lat}&lon=${lon}&difficulty=${difficulty}`);
-      if (!response.ok) throw new Error('Failed to generate forecast.');
-      setForecast(await response.json());
+      const response = await fetch(
+        `http://localhost:8000/api/forecast?lat=${lat}&lon=${lon}&difficulty=${difficulty}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to retrieve forecast. Make sure backend is running.');
+      }
+      const data = await response.json();
+      setForecast(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -92,82 +118,102 @@ export default function AIForecast({ apiBase, lat, lon, difficulty }) {
     }
   };
 
+  // Re-fetch forecast when coordinates or difficulty changes
   useEffect(() => {
-    if (lat && lon) fetchForecast();
+    if (lat && lon) {
+      fetchForecast();
+    }
   }, [lat, lon, difficulty]);
 
-  const chartData = forecast?.forecast?.map(item => ({
+  const formattedChartData = forecast?.forecast?.map(item => ({
     name: MONTH_NAMES[item.month - 1],
-    'Cloud (%)': Math.round(item.cloud_cover),
-    'Lightning (%)': Math.round(item.lightning_probability)
+    'Predicted Cloud (%)': Math.round(item.cloud_cover),
+    'Predicted Lightning Prob (%)': Math.round(item.lightning_probability)
   })) || [];
 
   return (
-    <div className="glass-panel p-8 sm:p-10 flex flex-col gap-6">
+    <div className="glass-panel p-6 flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold flex items-center gap-2.5">
-          <Sparkles className="text-secondary w-4.5 h-4.5" /> AI Forecast
-        </h2>
-        <button className="btn btn-secondary text-xs py-2 px-4" onClick={fetchForecast} disabled={loading}>
+        <div>
+          <h2 className="text-xl mb-1 flex items-center gap-2">
+            <Sparkles className="text-secondary w-5 h-5" /> AI Climatology Forecast
+          </h2>
+          <p className="text-sm text-text-secondary">AI-generated 12-month future prediction</p>
+        </div>
+        <button
+          className="btn btn-secondary text-xs"
+          onClick={fetchForecast}
+          disabled={loading}
+        >
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
           Refresh
         </button>
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center py-16">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-7 h-7 text-primary animate-spin" />
-            <p className="text-xs text-text-muted">Analyzing climatological profiles…</p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-sm text-text-muted">Gemini is analyzing historical profiles & topography...</p>
         </div>
       )}
 
       {error && (
-        <div className="flex items-center gap-3 p-5 bg-red-500/5 border border-red-500/15 rounded-xl">
-          <AlertTriangle className="text-red-400 w-4 h-4 flex-shrink-0" />
-          <span className="text-xs text-red-300">{error}</span>
+        <div className="bg-red-500/10 border border-red-500/25 p-4 rounded-lg flex items-start gap-3">
+          <AlertTriangle className="text-red-500 w-5 h-5 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-red-300">Forecasting Error</p>
+            <p className="text-xs text-red-400 mt-1">{error}</p>
+          </div>
         </div>
       )}
 
       {!loading && !forecast && !error && (
-        <div className="flex flex-col items-center py-16 gap-3">
-          <Bot className="w-10 h-10 text-text-muted/50" />
-          <p className="text-xs text-text-muted">Click refresh to generate AI forecast</p>
+        <div className="flex flex-col items-center justify-center py-20 border border-dashed border-white/10 rounded-lg">
+          <Bot className="w-12 h-12 text-text-muted mb-3" />
+          <p className="text-sm text-text-secondary font-semibold">Ready to Generate Forecast</p>
+          <p className="text-xs text-text-muted mt-1 mb-4">Click below to trigger AI analysis.</p>
+          <button className="btn btn-primary" onClick={fetchForecast}>
+            Generate AI Forecast
+          </button>
         </div>
       )}
 
       {forecast && (
-        <>
-          <div className="w-full h-[220px]">
+        <div className="flex flex-col gap-6">
+          {/* Chart */}
+          <div style={{ width: '100%', height: '240px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                <YAxis yAxisId="left" stroke="#67e8f9" fontSize={10} unit="%" tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#c084fc" fontSize={10} unit="%" tickLine={false} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 10 }} />
-                <Bar yAxisId="right" dataKey="Lightning (%)" fill="#c084fc" radius={[3, 3, 0, 0]} maxBarSize={18} opacity={0.7} />
-                <Line yAxisId="left" type="monotone" dataKey="Cloud (%)" stroke="#67e8f9" strokeWidth={2} dot={{ r: 2.5, strokeWidth: 0, fill: '#67e8f9' }} />
+              <ComposedChart data={formattedChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={11} tickLine={false} />
+                <YAxis yAxisId="left" stroke="var(--accent)" fontSize={11} unit="%" tickLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="var(--secondary)" fontSize={11} unit="%" tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: 'var(--bg-popover)', borderColor: 'var(--border)' }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar yAxisId="right" dataKey="Predicted Lightning Prob (%)" fill="var(--secondary)" radius={[3, 3, 0, 0]} maxBarSize={20} opacity={0.8} />
+                <Line yAxisId="left" type="monotone" dataKey="Predicted Cloud (%)" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-slate-950/40 p-6 rounded-xl border border-white/[0.06]">
-            <div className="flex items-center gap-2 text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-4">
-              <Bot className="w-3.5 h-3.5 text-secondary" /> Commentary
+          {/* Narrative */}
+          <div className="bg-slate-950/40 p-5 rounded-xl border border-white/5 flex flex-col gap-4">
+            <div className="flex items-center gap-2 text-[11px] font-semibold text-text-muted uppercase tracking-[0.18em]">
+              <Bot className="w-4 h-4 text-secondary" /> Meteorological Commentary
             </div>
-            <MarkdownNarrative text={forecast.narrative} />
+            <div className="text-sm">
+              <MarkdownNarrative text={forecast.narrative} />
+            </div>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-text-muted border-t border-white/[0.06] pt-5">
+          {/* Model Status info */}
+          <div className="flex items-center justify-between text-[11px] text-text-muted border-t border-white/5 pt-4">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-accent-green" /> {forecast.source}
+              <CheckCircle2 className="w-3.5 h-3.5 text-accent-green" /> Forecast Engine: {forecast.source}
             </span>
-            <span className="tabular-nums">{lat.toFixed(3)}°N, {lon.toFixed(3)}°E</span>
+            <span>Target Location: {lat.toFixed(3)}°, {lon.toFixed(3)}°</span>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
