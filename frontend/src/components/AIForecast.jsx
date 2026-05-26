@@ -132,7 +132,7 @@ export default function AIForecast({ lat, lon, difficulty }) {
   })) || [];
 
   return (
-    <div className="glass-panel p-6 flex flex-col gap-6">
+    <div className="glass-panel p-8 sm:p-10 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl mb-1 flex items-center gap-2">
@@ -183,7 +183,7 @@ export default function AIForecast({ lat, lon, difficulty }) {
           {/* Chart */}
           <div style={{ width: '100%', height: '240px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={formattedChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <ComposedChart data={formattedChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={11} tickLine={false} />
                 <YAxis yAxisId="left" stroke="var(--accent)" fontSize={11} unit="%" tickLine={false} />

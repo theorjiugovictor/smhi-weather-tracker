@@ -13,11 +13,11 @@ export default function App() {
       <header className="border-b border-white/5 bg-slate-950/40 backdrop-blur-xl sticky top-0 z-40">
         <div className={`max-w-7xl mx-auto ${RAIL} h-20 flex items-center justify-between`}>
           <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-gradient-to-tr from-primary to-secondary rounded-xl text-white shadow-lg shadow-primary/30">
+            <span className="p-2.5 bg-gradient-to-tr from-primary to-secondary rounded-xl text-white shadow-lg shadow-primary/30 animate-float">
               <CloudLightning className="w-5 h-5" />
             </span>
             <div className="leading-tight">
-              <span className="text-sm font-extrabold font-display tracking-[0.08em] bg-gradient-to-r from-white via-text-primary to-text-secondary bg-clip-text text-transparent">
+              <span className="text-sm font-extrabold font-display tracking-[0.08em] gradient-text">
                 SMHI WEATHER TRACKER
               </span>
               <span className="text-[10px] text-accent font-bold block tracking-[0.2em]">CLIMATOLOGY ENGINE</span>

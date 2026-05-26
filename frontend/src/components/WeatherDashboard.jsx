@@ -119,7 +119,7 @@ export default function WeatherDashboard() {
       {/* Main Dashboard Header */}
       <div className="flex flex-col gap-2">
         <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-accent">Active Coordinates</span>
-        <h1 className="text-4xl sm:text-5xl font-extrabold font-display leading-[1.05] tracking-tight bg-gradient-to-r from-white via-text-primary to-text-secondary bg-clip-text text-transparent">
+        <h1 className="text-4xl sm:text-5xl font-extrabold font-display leading-[1.05] tracking-tight gradient-text">
           {locationName}
         </h1>
         <p className="text-sm text-text-muted mt-1">

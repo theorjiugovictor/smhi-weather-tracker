@@ -6,16 +6,21 @@ flowchart TB
         UI[React + Vite SPA<br/>Recharts + Tailwind]
     end
 
-    subgraph Edge["☁️ Edge"]
-        CF[CloudFront CDN]
-        S3[(S3<br/>React build)]
+    subgraph Edge["☁️ GCP Edge"]
+        LB[Global HTTPS Load Balancer<br/>managed SSL + URL Map]
+        CDN[Cloud CDN]
+        GCS[(GCS Bucket<br/>React build)]
     end
 
-    subgraph App["⚙️ Application — ECS Fargate 2 AZs"]
-        ALB[Application Load Balancer<br/>port 80, healthcheck /]
-        API1[FastAPI Task 1]
-        API2[FastAPI Task 2]
+    subgraph App["⚙️ Cloud Run — autoscale 0→3"]
+        NEG[Serverless NEG]
+        API1[FastAPI Instance 1]
+        API2[FastAPI Instance 2]
         SEED[[Background Thread<br/>asyncio.Semaphore=15]]
+    end
+
+    subgraph Registry["📦 Artifact Registry"]
+        AR[Docker images]
     end
 
     subgraph Storage["💾 Data"]
@@ -29,11 +34,14 @@ flowchart TB
         GEM[Google Gemini 2.5-flash]
     end
 
-    UI -->|HTTPS| CF
-    CF -->|static assets| S3
-    CF -->|/api/*| ALB
-    ALB --> API1
-    ALB --> API2
+    UI -->|HTTPS| LB
+    LB -->|static / *| CDN
+    CDN --> GCS
+    LB -->|/api/*| NEG
+    NEG --> API1
+    NEG --> API2
+    AR -.->|pull image| API1
+    AR -.->|pull image| API2
     API1 <--> SQL
     API2 <--> SQL
     SEED -.->|on startup| SQL
@@ -43,8 +51,11 @@ flowchart TB
     API1 -.->|primary AI| GEM
 
     style UI fill:#4A90E2,color:#fff
-    style CF fill:#FF9900,color:#fff
-    style ALB fill:#FF9900,color:#fff
+    style LB fill:#4285F4,color:#fff
+    style CDN fill:#4285F4,color:#fff
+    style GCS fill:#34A853,color:#fff
+    style NEG fill:#FBBC04,color:#000
+    style AR fill:#EA4335,color:#fff
     style SQL fill:#1F8B4C,color:#fff
     style GEM fill:#9B59B6,color:#fff
     style SEED fill:#E67E22,color:#fff
