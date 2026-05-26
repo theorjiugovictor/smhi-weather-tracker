@@ -174,7 +174,7 @@ jobs:
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.GCP_REGION }}
-          image: ${{ needs.build.outputs.image }}
+          image: europe-north1-docker.pkg.dev/macs-489321/smhi-weather-tracker-api/api:${{ github.sha }}
           flags: |
             --port=8000
             --cpu=1
