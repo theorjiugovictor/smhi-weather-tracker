@@ -6,7 +6,6 @@ import urllib.parse
 import os
 import json
 import random
-import numpy as np
 from typing import Dict, List, Any, Optional
 
 app = FastAPI()
@@ -150,7 +149,7 @@ def get_simulated_lightning(lat, lon, radius_km):
     monthly_probs = {1:0, 2:0, 3:0.1, 4:0.5, 5:2, 6:12, 7:25, 8:20, 9:4, 10:0.8, 11:0.1, 12:0}
     days_in_month = {1:31,2:29,3:31,4:30,5:31,6:30,7:31,8:31,9:30,10:31,11:30,12:31}
     rad_factor = (radius_km / 25.0) ** 2
-    np.random.seed(int(lat * 100 + lon))
+    rng = random.Random(int(lat * 100 + lon))
     
     monthly = []
     daily = []
@@ -161,9 +160,9 @@ def get_simulated_lightning(lat, lon, radius_km):
         strike_days = 0
         month_count = 0
         for d in range(1, days+1):
-            if np.random.rand() * 100 < prob:
+            if rng.random() * 100 < prob:
                 strike_days += 1
-                count = int(np.random.randint(1, 15) * rad_factor)
+                count = int(rng.randint(1, 14) * rad_factor)
                 month_count += count
                 daily.append({"year": 2024, "month": m, "day": d, "count": count, "date": f"2024-{m:02d}-{d:02d}"})
         actual_prob = (strike_days / days) * 100.0
@@ -177,19 +176,23 @@ def generate_forecast(lat, lon, historical_cloud, historical_lightning):
     api_key = os.getenv("GEMINI_API_KEY")
     if api_key:
         try:
-            from google import genai
-            client = genai.Client(api_key=api_key)
             cloud_str = ", ".join([f"Month {i['month']}: {i['cloud_cover']:.1f}%" for i in historical_cloud])
             light_str = ", ".join([f"Month {i['month']}: {i['probability']:.1f}%" for i in historical_lightning])
             prompt = f"You are an expert AI Climatologist. Generate a 12-month forecast for Lat: {lat}, Lon: {lon}.\nCloud Cover: {cloud_str}\nLightning: {light_str}\nReturn ONLY raw JSON: {{\"forecast\": [{{\"month\": 1, \"cloud_cover\": 75.0, \"lightning_probability\": 0.0}}, ...], \"narrative\": \"...\"}}"
-            response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-            text = response.text.strip()
-            if text.startswith("```json"): text = text[7:]
-            if text.endswith("```"): text = text[:-3]
-            result = json.loads(text.strip())
-            if "forecast" in result and "narrative" in result:
-                result["source"] = "Gemini AI"
-                return result
+            import httpx as _httpx
+            resp = _httpx.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}",
+                json={"contents": [{"parts": [{"text": prompt}]}]},
+                timeout=25.0
+            )
+            if resp.status_code == 200:
+                text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                if text.startswith("```json"): text = text[7:]
+                if text.endswith("```"): text = text[:-3]
+                result = json.loads(text.strip())
+                if "forecast" in result and "narrative" in result:
+                    result["source"] = "Gemini AI"
+                    return result
         except Exception:
             pass
 

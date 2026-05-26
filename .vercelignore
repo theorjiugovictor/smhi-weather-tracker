@@ -1,0 +1,8 @@
+backend/
+*.db
+*.sqlite
+__pycache__/
+.venv/
+node_modules/
+.git/
+terraform/
