@@ -9,7 +9,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="border-b border-white/[0.04] bg-slate-950/60 backdrop-blur-xl sticky top-0 z-40">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
               <CloudLightning className="w-4 h-4 text-white" />
@@ -33,13 +33,13 @@ export default function App() {
       </header>
 
       {/* Main */}
-      <main className="flex-1 max-w-[1400px] w-full mx-auto px-6 sm:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-8 sm:px-12 lg:px-16 py-10">
         <WeatherDashboard apiBase={API_BASE} />
       </main>
 
       {/* Footer */}
       <footer className="border-t border-white/[0.04] py-6 text-center text-xs text-text-muted">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>SMHI Weather & Lightning Tracker — Pairs Programming Demo</p>
           <p className="text-text-muted/60">
             Data: <a href="https://opendata.smhi.se/" target="_blank" rel="noopener noreferrer" className="text-primary/80 hover:text-primary transition-colors">SMHI Open Data Portal</a>

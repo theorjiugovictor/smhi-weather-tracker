@@ -80,10 +80,10 @@ export default function WeatherDashboard({ apiBase }) {
     : null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {/* Seeding Progress */}
       {seedingStatus && seedingStatus.status === 'SEEDING' && (
-        <div className="glass-panel p-4 flex items-center gap-4">
+        <div className="glass-panel p-5 flex items-center gap-4">
           <Server className="w-4 h-4 text-primary status-pulse flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-text-primary truncate">Caching lightning strike archives…</p>
@@ -112,7 +112,7 @@ export default function WeatherDashboard({ apiBase }) {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Avg Cloud Cover"
           value={avgCloudCover !== null ? `${avgCloudCover}%` : '—'}
@@ -152,7 +152,7 @@ export default function WeatherDashboard({ apiBase }) {
           onDifficultyChange={setDifficulty}
         />
 
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6">
           {loading ? (
             <div className="glass-panel flex items-center justify-center py-32">
               <div className="flex flex-col items-center gap-3">
