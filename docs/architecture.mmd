@@ -1,0 +1,50 @@
+---
+title: SMHI Weather & Lightning Tracker — System Architecture
+---
+flowchart TB
+    subgraph Client["🌐 Browser"]
+        UI[React + Vite SPA<br/>Recharts + Tailwind]
+    end
+
+    subgraph Edge["☁️ Edge"]
+        CF[CloudFront CDN]
+        S3[(S3<br/>React build)]
+    end
+
+    subgraph App["⚙️ Application — ECS Fargate 2 AZs"]
+        ALB[Application Load Balancer<br/>port 80, healthcheck /]
+        API1[FastAPI Task 1]
+        API2[FastAPI Task 2]
+        SEED[[Background Thread<br/>asyncio.Semaphore=15]]
+    end
+
+    subgraph Storage["💾 Data"]
+        SQL[(SQLite<br/>stations / lightning / seeding_status<br/>indexes: coords, date, active)]
+    end
+
+    subgraph Ext["🌍 External APIs"]
+        NOM[Nominatim OSM]
+        SMHI_OBS[SMHI MetObs CSV]
+        SMHI_LGT[SMHI Lightning JSON]
+        GEM[Google Gemini 2.5-flash]
+    end
+
+    UI -->|HTTPS| CF
+    CF -->|static assets| S3
+    CF -->|/api/*| ALB
+    ALB --> API1
+    ALB --> API2
+    API1 <--> SQL
+    API2 <--> SQL
+    SEED -.->|on startup| SQL
+    API1 -.->|cache miss| NOM
+    API1 -.->|cache miss| SMHI_OBS
+    SEED ==>|batch fetch 365 days| SMHI_LGT
+    API1 -.->|primary AI| GEM
+
+    style UI fill:#4A90E2,color:#fff
+    style CF fill:#FF9900,color:#fff
+    style ALB fill:#FF9900,color:#fff
+    style SQL fill:#1F8B4C,color:#fff
+    style GEM fill:#9B59B6,color:#fff
+    style SEED fill:#E67E22,color:#fff
