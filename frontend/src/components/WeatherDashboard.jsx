@@ -189,7 +189,7 @@ function MetricCard({ label, value, sub, icon, color }) {
   const cls = colorMap[color] || colorMap.primary;
 
   return (
-    <div className="glass-card flex items-start justify-between gap-4">
+    <div className="glass-card p-7 sm:p-8 flex items-start justify-between gap-4">
       <div className="min-w-0 flex-1">
         <span className="text-[11px] font-semibold text-text-muted uppercase tracking-widest block mb-2">{label}</span>
         <span className="text-2xl font-bold font-display block truncate tracking-tight">{value}</span>

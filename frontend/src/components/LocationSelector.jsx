@@ -72,13 +72,13 @@ export default function LocationSelector({ apiBase, onLocationSelect, currentDif
         <label className="text-xs font-semibold flex items-center gap-2 text-text-secondary">
           <Sliders className="w-3.5 h-3.5 text-secondary" /> Calculation Mode
         </label>
-        <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-[#0a0e1a]/60 rounded-xl border border-white/[0.06]">
+        <div className="grid grid-cols-3 gap-2 p-2 bg-[#0a0e1a]/60 rounded-xl border border-white/[0.06]">
           {DIFFICULTIES.map(({ id, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => onDifficultyChange(id)}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
+              className={`py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 ${
                 currentDifficulty === id
                   ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md shadow-primary/20'
                   : 'text-text-muted hover:text-text-secondary hover:bg-white/[0.03]'

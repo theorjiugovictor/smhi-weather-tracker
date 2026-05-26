@@ -83,15 +83,15 @@ export default function WeatherCharts({ data }) {
       <div className="w-full h-[320px]">
         {activeTab === 'monthly' && (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={monthlyData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+            <ComposedChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
-              <YAxis yAxisId="left" stroke="#6366f1" fontSize={10} unit="%" tickLine={false} />
-              <YAxis yAxisId="right" orientation="right" stroke="#a855f7" fontSize={10} unit="%" tickLine={false} />
+              <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+              <YAxis yAxisId="left" stroke="#818cf8" fontSize={10} unit="%" tickLine={false} />
+              <YAxis yAxisId="right" orientation="right" stroke="#c084fc" fontSize={10} unit="%" tickLine={false} />
               <Tooltip />
               <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-              <Bar yAxisId="right" dataKey="Lightning Prob (%)" fill="#a855f7" radius={[3, 3, 0, 0]} maxBarSize={24} opacity={0.7} />
-              <Line yAxisId="left" type="monotone" dataKey="Cloud Cover (%)" stroke="#6366f1" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#6366f1' }} />
+              <Bar yAxisId="right" dataKey="Lightning Prob (%)" fill="#c084fc" radius={[3, 3, 0, 0]} maxBarSize={24} opacity={0.7} />
+              <Line yAxisId="left" type="monotone" dataKey="Cloud Cover (%)" stroke="#818cf8" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#818cf8' }} />
             </ComposedChart>
           </ResponsiveContainer>
         )}
@@ -99,7 +99,7 @@ export default function WeatherCharts({ data }) {
         {activeTab === 'daily' && (
           dailyData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailyData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+              <AreaChart data={dailyData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="dailyGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.25} />
@@ -107,10 +107,10 @@ export default function WeatherCharts({ data }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="date" stroke="#64748b" fontSize={9} tickLine={false} tickFormatter={s => s.substring(5)} />
-                <YAxis stroke="#64748b" fontSize={10} unit="%" tickLine={false} />
+                <XAxis dataKey="date" stroke="#94a3b8" fontSize={9} tickLine={false} tickFormatter={s => s.substring(5)} />
+                <YAxis stroke="#94a3b8" fontSize={10} unit="%" tickLine={false} />
                 <Tooltip />
-                <Area type="monotone" dataKey="Cloud Cover (%)" stroke="#22d3ee" strokeWidth={1.5} fill="url(#dailyGrad)" />
+                <Area type="monotone" dataKey="Cloud Cover (%)" stroke="#67e8f9" strokeWidth={1.5} fill="url(#dailyGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -121,15 +121,15 @@ export default function WeatherCharts({ data }) {
         {activeTab === 'yearly' && (
           yearlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={yearlyData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+              <ComposedChart data={yearlyData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="year" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis yAxisId="left" stroke="#34d399" fontSize={10} unit="%" tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#a855f7" fontSize={10} tickLine={false} />
+                <XAxis dataKey="year" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <YAxis yAxisId="left" stroke="#6ee7b7" fontSize={10} unit="%" tickLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="#c084fc" fontSize={10} tickLine={false} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                <Bar yAxisId="right" dataKey="Lightning Strikes" fill="#a855f7" radius={[3, 3, 0, 0]} maxBarSize={24} opacity={0.7} />
-                <Line yAxisId="left" type="monotone" dataKey="Avg Cloud (%)" stroke="#34d399" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#34d399' }} />
+                <Bar yAxisId="right" dataKey="Lightning Strikes" fill="#c084fc" radius={[3, 3, 0, 0]} maxBarSize={24} opacity={0.7} />
+                <Line yAxisId="left" type="monotone" dataKey="Avg Cloud (%)" stroke="#6ee7b7" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 0, fill: '#6ee7b7' }} />
               </ComposedChart>
             </ResponsiveContainer>
           ) : (

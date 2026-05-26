@@ -124,7 +124,7 @@ export default function AIForecast({ apiBase, lat, lon, difficulty }) {
       )}
 
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-500/5 border border-red-500/15 rounded-lg">
+        <div className="flex items-center gap-3 p-5 bg-red-500/5 border border-red-500/15 rounded-xl">
           <AlertTriangle className="text-red-400 w-4 h-4 flex-shrink-0" />
           <span className="text-xs text-red-300">{error}</span>
         </div>
@@ -143,27 +143,27 @@ export default function AIForecast({ apiBase, lat, lon, difficulty }) {
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
-                <YAxis yAxisId="left" stroke="#22d3ee" fontSize={10} unit="%" tickLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="#a855f7" fontSize={10} unit="%" tickLine={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                <YAxis yAxisId="left" stroke="#67e8f9" fontSize={10} unit="%" tickLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="#c084fc" fontSize={10} unit="%" tickLine={false} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 10 }} />
-                <Bar yAxisId="right" dataKey="Lightning (%)" fill="#a855f7" radius={[3, 3, 0, 0]} maxBarSize={18} opacity={0.7} />
-                <Line yAxisId="left" type="monotone" dataKey="Cloud (%)" stroke="#22d3ee" strokeWidth={2} dot={{ r: 2.5, strokeWidth: 0, fill: '#22d3ee' }} />
+                <Bar yAxisId="right" dataKey="Lightning (%)" fill="#c084fc" radius={[3, 3, 0, 0]} maxBarSize={18} opacity={0.7} />
+                <Line yAxisId="left" type="monotone" dataKey="Cloud (%)" stroke="#67e8f9" strokeWidth={2} dot={{ r: 2.5, strokeWidth: 0, fill: '#67e8f9' }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-slate-950/40 p-4 rounded-lg border border-white/[0.04]">
-            <div className="flex items-center gap-2 text-[10px] font-medium text-text-muted uppercase tracking-wider mb-3">
+          <div className="bg-slate-950/40 p-6 rounded-xl border border-white/[0.06]">
+            <div className="flex items-center gap-2 text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-4">
               <Bot className="w-3.5 h-3.5 text-secondary" /> Commentary
             </div>
             <MarkdownNarrative text={forecast.narrative} />
           </div>
 
-          <div className="flex items-center justify-between text-[10px] text-text-muted border-t border-white/[0.04] pt-3">
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-accent-green" /> {forecast.source}
+          <div className="flex items-center justify-between text-[11px] text-text-muted border-t border-white/[0.06] pt-5">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-accent-green" /> {forecast.source}
             </span>
             <span className="tabular-nums">{lat.toFixed(3)}°N, {lon.toFixed(3)}°E</span>
           </div>
