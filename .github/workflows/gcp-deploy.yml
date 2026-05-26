@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 env:
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_PROJECT_ID: macs-489321
   GCP_REGION: europe-north1
   SERVICE_NAME: smhi-weather-tracker-api
   ARTIFACT_REPO: smhi-weather-tracker-api
