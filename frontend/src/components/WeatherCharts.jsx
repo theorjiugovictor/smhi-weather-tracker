@@ -12,7 +12,7 @@ import {
   AreaChart,
   Area
 } from 'recharts';
-import { Calendar, Layers, Clock, AlertTriangle } from 'lucide-react';
+import { Calendar, Layers, Clock } from 'lucide-react';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -78,16 +78,6 @@ export default function WeatherCharts({ data }) {
           ))}
         </div>
       </div>
-
-      {/* Simulated data warning */}
-      {lightning?.is_simulated && (
-        <div className="flex items-center gap-2 p-3 bg-amber-500/5 border border-amber-500/15 rounded-lg">
-          <AlertTriangle className="text-amber-400 w-4 h-4 flex-shrink-0" />
-          <span className="text-[11px] text-amber-300/80">
-            Lightning data is simulated while the database cache loads in background.
-          </span>
-        </div>
-      )}
 
       {/* Chart */}
       <div className="w-full h-[320px]">
