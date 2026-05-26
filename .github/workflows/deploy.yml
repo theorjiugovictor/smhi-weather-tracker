@@ -62,12 +62,63 @@ jobs:
           npm run build
 
   # ─────────────────────────────────────────────────
-  # Stage 2: Build & Push to Artifact Registry
+  # Stage 2: Terraform (Infrastructure)
+  # ─────────────────────────────────────────────────
+  terraform:
+    name: Terraform Plan & Apply
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'workflow_dispatch'
+    outputs:
+      cloud_run_url: ${{ steps.outputs.outputs.cloud_run_url }}
+      frontend_bucket: ${{ steps.outputs.outputs.frontend_bucket }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7"
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: terraform
+        run: |
+          terraform plan \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
+            -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: terraform apply -auto-approve tfplan
+
+      - name: Export Terraform outputs
+        id: outputs
+        working-directory: terraform
+        run: |
+          echo "cloud_run_url=$(terraform output -raw cloud_run_url)" >> $GITHUB_OUTPUT
+          echo "frontend_bucket=$(terraform output -raw frontend_bucket_url | sed 's|https://storage.googleapis.com/||;s|/index.html||')" >> $GITHUB_OUTPUT
+
+  # ─────────────────────────────────────────────────
+  # Stage 3: Build & Push to Artifact Registry
   # ─────────────────────────────────────────────────
   build:
     name: Build & Push Container Image
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, terraform]
     if: github.event_name == 'workflow_dispatch'
     outputs:
       image: ${{ steps.build.outputs.image }}
@@ -102,12 +153,12 @@ jobs:
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
   # ─────────────────────────────────────────────────
-  # Stage 3: Deploy Backend to Cloud Run
+  # Stage 4: Deploy Backend to Cloud Run
   # ─────────────────────────────────────────────────
   deploy-backend:
     name: Deploy Backend (Cloud Run)
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, terraform]
 
     steps:
       - name: Authenticate to Google Cloud
@@ -140,12 +191,12 @@ jobs:
           curl -sf "$URL/api/cache-status?year=2024" | jq .
 
   # ─────────────────────────────────────────────────
-  # Stage 4: Deploy Frontend to Cloud Storage + CDN
+  # Stage 5: Deploy Frontend to Cloud Storage + CDN
   # ─────────────────────────────────────────────────
   deploy-frontend:
     name: Deploy Frontend (GCS + Cloud CDN)
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, terraform]
     if: github.event_name == 'workflow_dispatch'
 
     steps:

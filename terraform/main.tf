@@ -7,6 +7,11 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "gcs" {
+    bucket = "smhi-weather-tracker-tfstate"
+    prefix = "terraform/state"
+  }
 }
 
 provider "google" {
