@@ -103,13 +103,13 @@ export default function AIForecast({ apiBase, lat, lon, difficulty }) {
   })) || [];
 
   return (
-    <div className="glass-panel p-8 flex flex-col gap-5">
+    <div className="glass-panel p-8 sm:p-10 flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold flex items-center gap-2">
-          <Sparkles className="text-secondary w-4 h-4" /> AI Forecast
+        <h2 className="text-base font-semibold flex items-center gap-2.5">
+          <Sparkles className="text-secondary w-4.5 h-4.5" /> AI Forecast
         </h2>
-        <button className="btn btn-secondary text-xs py-1.5 px-3" onClick={fetchForecast} disabled={loading}>
-          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+        <button className="btn btn-secondary text-xs py-2 px-4" onClick={fetchForecast} disabled={loading}>
+          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
           Refresh
         </button>
       </div>

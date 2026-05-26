@@ -56,19 +56,19 @@ export default function WeatherCharts({ data }) {
   }));
 
   return (
-    <div className="glass-panel p-8 flex flex-col gap-5">
+    <div className="glass-panel p-8 sm:p-10 flex flex-col gap-6">
       {/* Header + Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-base font-semibold flex items-center gap-2">
-          <Layers className="text-primary w-4 h-4" /> Weather Data
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-base font-semibold flex items-center gap-2.5">
+          <Layers className="text-primary w-4.5 h-4.5" /> Weather Data
         </h2>
-        <div className="flex bg-slate-900/60 p-0.5 rounded-lg border border-white/[0.04]">
+        <div className="flex bg-[#0a0e1a]/60 p-1 rounded-xl border border-white/[0.06]">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
                 activeTab === id
-                  ? 'bg-primary/20 text-primary'
+                  ? 'bg-primary/15 text-primary shadow-sm'
                   : 'text-text-muted hover:text-text-secondary'
               }`}
               onClick={() => setActiveTab(id)}
@@ -149,18 +149,18 @@ export default function WeatherCharts({ data }) {
       </div>
 
       {/* Footer metrics */}
-      <div className="grid grid-cols-3 gap-4 border-t border-white/[0.04] pt-4 text-[11px]">
+      <div className="grid grid-cols-3 gap-6 border-t border-white/[0.06] pt-6 text-xs">
         <div>
-          <span className="text-text-muted block">Radius</span>
-          <span className="text-text-primary font-medium">{lightning?.radius_used_km} km</span>
+          <span className="text-text-muted block mb-1">Radius</span>
+          <span className="text-text-primary font-semibold">{lightning?.radius_used_km} km</span>
         </div>
         <div>
-          <span className="text-text-muted block">Observations</span>
-          <span className="text-text-primary font-medium">{cloud_cover?.daily?.length || 0} days</span>
+          <span className="text-text-muted block mb-1">Observations</span>
+          <span className="text-text-primary font-semibold">{cloud_cover?.daily?.length || 0} days</span>
         </div>
         <div>
-          <span className="text-text-muted block">Method</span>
-          <span className="text-text-primary font-medium capitalize">
+          <span className="text-text-muted block mb-1">Method</span>
+          <span className="text-text-primary font-semibold capitalize">
             {data.difficulty === 'hard' ? 'IDW Interpolation' : 'Single Station'}
           </span>
         </div>

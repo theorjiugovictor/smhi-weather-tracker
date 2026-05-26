@@ -80,10 +80,10 @@ export default function WeatherDashboard({ apiBase }) {
     : null;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       {/* Seeding Progress */}
       {seedingStatus && seedingStatus.status === 'SEEDING' && (
-        <div className="glass-panel p-5 flex items-center gap-4">          <Server className="w-4 h-4 text-primary status-pulse flex-shrink-0" />
+        <div className="glass-panel p-6 flex items-center gap-5">          <Server className="w-4 h-4 text-primary status-pulse flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-text-primary truncate">Caching lightning strike archives…</p>
             <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -100,18 +100,18 @@ export default function WeatherDashboard({ apiBase }) {
       )}
 
       {/* Location Header */}
-      <div>
-        <p className="text-[11px] font-medium uppercase tracking-widest text-primary mb-1">Active Location</p>
-        <h1 className="text-3xl sm:text-4xl font-bold font-display tracking-tight text-text-primary">
+      <div className="animate-fade-in-up">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary mb-2">Active Location</p>
+        <h1 className="text-4xl sm:text-5xl font-bold font-display tracking-tight gradient-text">
           {locationName}
         </h1>
-        <p className="text-sm text-text-muted mt-1 tabular-nums">
+        <p className="text-sm text-text-muted mt-2 tabular-nums">
           {lat.toFixed(4)}° N, {lon.toFixed(4)}° E
         </p>
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         <MetricCard
           label="Avg Cloud Cover"
           value={avgCloudCover !== null ? `${avgCloudCover}%` : '—'}
@@ -181,21 +181,21 @@ export default function WeatherDashboard({ apiBase }) {
 
 function MetricCard({ label, value, sub, icon, color }) {
   const colorMap = {
-    primary: 'text-primary bg-primary/10 ring-primary/20',
-    secondary: 'text-secondary bg-secondary/10 ring-secondary/20',
-    accent: 'text-accent bg-accent/10 ring-accent/20',
-    'accent-green': 'text-accent-green bg-accent-green/10 ring-accent-green/20',
+    primary: 'text-primary bg-primary/10 ring-primary/20 shadow-primary/10',
+    secondary: 'text-secondary bg-secondary/10 ring-secondary/20 shadow-secondary/10',
+    accent: 'text-accent bg-accent/10 ring-accent/20 shadow-accent/10',
+    'accent-green': 'text-accent-green bg-accent-green/10 ring-accent-green/20 shadow-accent-green/10',
   };
   const cls = colorMap[color] || colorMap.primary;
 
   return (
-    <div className="glass-card flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <span className="text-[11px] font-medium text-text-muted uppercase tracking-wider block mb-1">{label}</span>
-        <span className="text-xl font-bold font-display block truncate">{value}</span>
-        {sub && <span className="text-[11px] text-text-muted block mt-0.5">{sub}</span>}
+    <div className="glass-card flex items-start justify-between gap-4">
+      <div className="min-w-0 flex-1">
+        <span className="text-[11px] font-semibold text-text-muted uppercase tracking-widest block mb-2">{label}</span>
+        <span className="text-2xl font-bold font-display block truncate tracking-tight">{value}</span>
+        {sub && <span className="text-xs text-text-muted/80 block mt-1.5">{sub}</span>}
       </div>
-      <div className={`p-2.5 rounded-lg ring-1 flex-shrink-0 ${cls}`}>
+      <div className={`p-3 rounded-xl ring-1 flex-shrink-0 shadow-lg ${cls}`}>
         {icon}
       </div>
     </div>
