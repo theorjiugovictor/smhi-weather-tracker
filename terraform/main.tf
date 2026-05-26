@@ -1,392 +1,266 @@
-provider "aws" {
-  region = var.aws_region
-}
+terraform {
+  required_version = ">= 1.5"
 
-# ==============================================================================
-# VPC & NETWORK CONFIGURATION
-# ==============================================================================
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-
-  tags = {
-    Name        = "${var.project_name}-vpc"
-    Environment = var.environment
-  }
-}
-
-resource "aws_subnet" "public_a" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = data.aws_availability_zones.available.names[0]
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "${var.project_name}-public-subnet-a"
-  }
-}
-
-resource "aws_subnet" "public_b" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = data.aws_availability_zones.available.names[1]
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "${var.project_name}-public-subnet-b"
-  }
-}
-
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "${var.project_name}-igw"
-  }
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-  }
-
-  tags = {
-    Name = "${var.project_name}-public-rt"
-  }
-}
-
-resource "aws_route_table_association" "a" {
-  subnet_id      = aws_subnet.public_a.id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "b" {
-  subnet_id      = aws_subnet.public_b.id
-  route_table_id = aws_route_table.public.id
-}
-
-# ==============================================================================
-# SECURITY GROUPS
-# ==============================================================================
-resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-alb-sg"
-  description = "Allow inbound HTTP and HTTPS traffic to ALB"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "ecs_tasks" {
-  name        = "${var.project_name}-ecs-tasks-sg"
-  description = "Allow inbound traffic from ALB only"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port       = var.container_port
-    to_port         = var.container_port
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-# ==============================================================================
-# LOAD BALANCER
-# ==============================================================================
-resource "aws_lb" "main" {
-  name               = "${var.project_name}-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = [aws_subnet.public_a.id, aws_subnet.public_b.id]
-
-  tags = {
-    Name        = "${var.project_name}-alb"
-    Environment = var.environment
-  }
-}
-
-resource "aws_lb_target_group" "api" {
-  name        = "${var.project_name}-tg"
-  port        = var.container_port
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
-  target_type = "ip"
-
-  health_check {
-    path                = "/"
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    timeout             = 5
-    interval            = 30
-    matcher             = "200"
-  }
-}
-
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.main.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.api.arn
-  }
-}
-
-# ==============================================================================
-# ECR & ECS CONFIGURATION
-# ==============================================================================
-resource "aws_ecr_repository" "api" {
-  name                 = "${var.project_name}-api"
-  image_tag_mutability = "MUTABLE"
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-}
-
-resource "aws_ecs_cluster" "main" {
-  name = "${var.project_name}-cluster"
-}
-
-resource "aws_iam_role" "ecs_execution" {
-  name = "${var.project_name}-ecs-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_execution" {
-  role       = aws_iam_role.ecs_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# Log group for container output logs
-resource "aws_cloudwatch_log_group" "ecs" {
-  name              = "/ecs/${var.project_name}"
-  retention_in_days = 7
-}
-
-resource "aws_ecs_task_definition" "api" {
-  family                   = "${var.project_name}-task"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-
-  container_definitions = jsonencode([
-    {
-      name      = "api"
-      image     = "${aws_ecr_repository.api.repository_url}:latest"
-      essential = true
-      portMappings = [
-        {
-          containerPort = var.container_port
-          hostPort      = var.container_port
-        }
-      ]
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.ecs.name
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "api"
-        }
-      }
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
     }
+  }
+}
+
+provider "google" {
+  project = var.project_id
+  region  = var.region
+}
+
+# ==============================================================================
+# ENABLE REQUIRED APIs
+# ==============================================================================
+resource "google_project_service" "apis" {
+  for_each = toset([
+    "run.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "compute.googleapis.com",
   ])
-}
 
-resource "aws_ecs_service" "api" {
-  name            = "${var.project_name}-service"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  project = var.project_id
+  service = each.value
 
-  network_configuration {
-    subnets          = [aws_subnet.public_a.id, aws_subnet.public_b.id]
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = true
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.api.arn
-    container_name   = "api"
-    container_port   = var.container_port
-  }
-
-  depends_on = [aws_lb_listener.http]
+  disable_on_destroy = false
 }
 
 # ==============================================================================
-# S3 STATIC WEB HOSTING (React Frontend)
+# ARTIFACT REGISTRY (Container Image Storage)
 # ==============================================================================
-resource "aws_s3_bucket" "frontend" {
-  bucket = "${var.project_name}-frontend-${random_string.bucket_suffix.result}"
-}
+resource "google_artifact_registry_repository" "api" {
+  location      = var.region
+  repository_id = "${var.project_name}-api"
+  description   = "Docker images for SMHI Weather Tracker backend"
+  format        = "DOCKER"
 
-resource "random_string" "bucket_suffix" {
-  length  = 6
-  special = false
-  upper   = false
-}
-
-resource "aws_s3_bucket_website_configuration" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
-  index_document {
-    suffix = "index.html"
-  }
-
-  error_document {
-    key = "index.html"
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-resource "aws_s3_bucket_policy" "frontend_policy" {
-  bucket     = aws_s3_bucket.frontend.id
-  depends_on = [aws_s3_bucket_public_access_block.frontend]
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.frontend.arn}/*"
-      }
-    ]
-  })
-}
-
-# ==============================================================================
-# CLOUDFRONT DISTRIBUTION
-# ==============================================================================
-resource "aws_cloudfront_distribution" "cdn" {
-  origin {
-    domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
-    origin_id   = "S3-Frontend"
-  }
-
-  # API origin pointing to Application Load Balancer
-  origin {
-    domain_name = aws_lb.main.dns_name
-    origin_id   = "ALB-API"
-
-    custom_origin_config {
-      http_port                = 80
-      https_port               = 443
-      origin_protocol_policy   = "http-only"
-      origin_ssl_protocols     = ["TLSv1.2"]
+  cleanup_policies {
+    id     = "keep-recent"
+    action = "KEEP"
+    most_recent_versions {
+      keep_count = 5
     }
   }
 
-  enabled             = true
-  is_ipv6_enabled     = true
-  default_root_object = "index.html"
+  depends_on = [google_project_service.apis["artifactregistry.googleapis.com"]]
+}
 
-  # Default cache behavior for S3 static files
-  default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "S3-Frontend"
+# ==============================================================================
+# CLOUD RUN SERVICE (Backend API)
+# ==============================================================================
+resource "google_cloud_run_v2_service" "api" {
+  name     = "${var.project_name}-api"
+  location = var.region
+  ingress  = "INGRESS_TRAFFIC_ALL"
 
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
+  template {
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 3
+    }
+
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.api.repository_id}/api:latest"
+
+      ports {
+        container_port = 8000
+      }
+
+      env {
+        name  = "GEMINI_API_KEY"
+        value = var.gemini_api_key
+      }
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
+        cpu_idle = true
+      }
+
+      startup_probe {
+        http_get {
+          path = "/api/cache-status?year=2024"
+        }
+        initial_delay_seconds = 5
+        period_seconds        = 5
+        failure_threshold     = 3
       }
     }
-
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
   }
 
-  # Route `/api/*` directly to the ALB Python backend API
-  ordered_cache_behavior {
-    path_pattern     = "/api/*"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "ALB-API"
+  traffic {
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
+  }
 
-    forwarded_values {
-      query_string = true
-      headers      = ["*"]
-      cookies {
-        forward = "all"
-      }
+  depends_on = [google_project_service.apis["run.googleapis.com"]]
+}
+
+# Allow unauthenticated access (public API)
+resource "google_cloud_run_v2_service_iam_member" "public" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.api.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
+# ==============================================================================
+# CLOUD STORAGE (Frontend Static Files)
+# ==============================================================================
+resource "google_storage_bucket" "frontend" {
+  name          = "${var.project_name}-frontend-${var.project_id}"
+  location      = var.region
+  force_destroy = true
+
+  uniform_bucket_level_access = true
+
+  website {
+    main_page_suffix = "index.html"
+    not_found_page   = "index.html"
+  }
+
+  cors {
+    origin          = ["*"]
+    method          = ["GET", "HEAD"]
+    response_header = ["Content-Type"]
+    max_age_seconds = 3600
+  }
+}
+
+# Make bucket publicly readable
+resource "google_storage_bucket_iam_member" "public_read" {
+  bucket = google_storage_bucket.frontend.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+
+# ==============================================================================
+# CLOUD CDN + LOAD BALANCER (Frontend + API routing)
+# ==============================================================================
+resource "google_compute_backend_bucket" "frontend" {
+  name        = "${var.project_name}-frontend-backend"
+  bucket_name = google_storage_bucket.frontend.name
+  enable_cdn  = true
+
+  cdn_policy {
+    cache_mode                   = "CACHE_ALL_STATIC"
+    default_ttl                  = 3600
+    max_ttl                      = 86400
+    client_ttl                   = 3600
+    signed_url_cache_max_age_sec = 0
+  }
+
+  depends_on = [google_project_service.apis["compute.googleapis.com"]]
+}
+
+# Serverless NEG for Cloud Run
+resource "google_compute_region_network_endpoint_group" "api_neg" {
+  name                  = "${var.project_name}-api-neg"
+  network_endpoint_type = "SERVERLESS"
+  region                = var.region
+
+  cloud_run {
+    service = google_cloud_run_v2_service.api.name
+  }
+}
+
+resource "google_compute_backend_service" "api" {
+  name                  = "${var.project_name}-api-backend"
+  protocol              = "HTTPS"
+  port_name             = "http"
+  timeout_sec           = 30
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+
+  backend {
+    group = google_compute_region_network_endpoint_group.api_neg.id
+  }
+
+  log_config {
+    enable      = true
+    sample_rate = 0.5
+  }
+}
+
+# URL Map: route /api/* to Cloud Run, everything else to GCS
+resource "google_compute_url_map" "default" {
+  name            = "${var.project_name}-url-map"
+  default_service = google_compute_backend_bucket.frontend.id
+
+  host_rule {
+    hosts        = ["*"]
+    path_matcher = "routes"
+  }
+
+  path_matcher {
+    name            = "routes"
+    default_service = google_compute_backend_bucket.frontend.id
+
+    path_rule {
+      paths   = ["/api/*"]
+      service = google_compute_backend_service.api.id
     }
-
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 0
-    max_ttl                = 0
   }
+}
 
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
+# HTTPS proxy + global forwarding rule
+resource "google_compute_target_https_proxy" "default" {
+  name    = "${var.project_name}-https-proxy"
+  url_map = google_compute_url_map.default.id
 
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
+  ssl_certificates = [google_compute_managed_ssl_certificate.default.id]
+}
 
-  tags = {
-    Name        = "${var.project_name}-cdn"
-    Environment = var.environment
+resource "google_compute_managed_ssl_certificate" "default" {
+  name = "${var.project_name}-cert"
+
+  managed {
+    domains = ["${var.project_name}.example.com"]
   }
+}
+
+resource "google_compute_global_address" "default" {
+  name = "${var.project_name}-ip"
+}
+
+resource "google_compute_global_forwarding_rule" "https" {
+  name                  = "${var.project_name}-https-rule"
+  ip_protocol           = "TCP"
+  port_range            = "443"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  target                = google_compute_target_https_proxy.default.id
+  ip_address            = google_compute_global_address.default.id
+}
+
+# HTTP → HTTPS redirect
+resource "google_compute_url_map" "http_redirect" {
+  name = "${var.project_name}-http-redirect"
+
+  default_url_redirect {
+    https_redirect         = true
+    redirect_response_code = "MOVED_PERMANENTLY_DEFAULT"
+    strip_query            = false
+  }
+}
+
+resource "google_compute_target_http_proxy" "redirect" {
+  name    = "${var.project_name}-http-proxy"
+  url_map = google_compute_url_map.http_redirect.id
+}
+
+resource "google_compute_global_forwarding_rule" "http" {
+  name                  = "${var.project_name}-http-rule"
+  ip_protocol           = "TCP"
+  port_range            = "80"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  target                = google_compute_target_http_proxy.redirect.id
+  ip_address            = google_compute_global_address.default.id
 }

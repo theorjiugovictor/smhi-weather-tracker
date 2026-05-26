@@ -1,19 +1,19 @@
-output "cloudfront_domain_name" {
-  value       = aws_cloudfront_distribution.cdn.domain_name
-  description = "The domain name of the CloudFront CDN distribution serving the React app and API"
+output "cloud_run_url" {
+  value       = google_cloud_run_v2_service.api.uri
+  description = "Direct URL for the Cloud Run backend API"
 }
 
-output "ecr_repository_url" {
-  value       = aws_ecr_repository.api.repository_url
-  description = "The registry URL of the ECR repository for the backend image"
+output "frontend_bucket_url" {
+  value       = "https://storage.googleapis.com/${google_storage_bucket.frontend.name}/index.html"
+  description = "Direct GCS URL for the frontend (use CDN URL in production)"
 }
 
-output "alb_dns_name" {
-  value       = aws_lb.main.dns_name
-  description = "The public DNS name of the API Application Load Balancer"
+output "load_balancer_ip" {
+  value       = google_compute_global_address.default.address
+  description = "Global static IP for the HTTPS load balancer"
 }
 
-output "s3_bucket_name" {
-  value       = aws_s3_bucket.frontend.id
-  description = "The name of the S3 bucket hosting static frontend files"
+output "artifact_registry" {
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.api.repository_id}"
+  description = "Artifact Registry path for docker push"
 }
